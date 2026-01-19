@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>114義消尾牙座位查詢</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Papa/5.3.0/papaparse.min.js"></script>
+    <style>
+        /* 頁面樣式設定 */
+        body {
+            font-family: "Microsoft JhengHei", "Heiti TC", sans-serif;
+            background-color: #f0f2f5;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            width: 95%;
+            max-width: 480px;
+            text-align: center;
+        }
+        h1 { color: #d32f2f; margin: 0 0 10px 0; font-size: 24px; }
+        p.subtitle { color: #666; margin-bottom: 25px; font-size: 15px; }
+        
+        /* 輸入框樣式 */
+        input[type="text"] {
+            width: 100%;
+            padding: 15px;
+            margin-bottom: 15px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 18px;
+            text-align: center;
+            box-sizing: border-box; 
+            transition: border-color 0.3s;
+        }
+        input:focus { border-color: #d32f2f; outline: none; }
+        
+        /* 按鈕樣式 */
+        button {
+            width: 100%;
+            padding: 15px;
+            background-color: #d32f2f;
+            color: white;
+            border: none;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 18px;
+            font-weight: bold;
+            transition: transform 0.1s, background-color 0.2s;
+        }
+        button:active { transform: scale(0.98); }
+        button:disabled { background-color: #bdbdbd; cursor: not-allowed; }
+
+        /* 結果顯示區 */
+        #result {
+            margin-top: 25px;
+            padding: 15px;
+            border-radius: 8px;
+            min-height: 60px;
+            font-size: 1.1rem;
+            line-height: 1.6;
+            display: none; 
+        }
+        .result-box { display: block !important; }
+        
+        .seat-highlight { 
+            font-size: 2rem; 
+            color: #d32f2f; 
+            font-weight: 800; 
+            display: block; 
+            margin: 10px 0;
+        }
+        .loading-text { font-size: 14px; color: #888; margin-top: 10px; }
+        .error-msg { color: #c62828; font-weight: bold; background: #ffebee; padding: 10px; border-radius: 5px; }
+        .multi-result { text-align: left; background: #fafafa; padding: 10px; border-radius: 5px; }
+        .footer { margin-top: 30px; font-size: 12px; color: #aaa; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🧧 114義消尾牙座位查詢</h1>
+        <p class="subtitle">輸入您的姓名，快速查找桌次</p>
+        
+        <input type="text" id="searchInput" placeholder="請輸入姓名 (例如：林謙志)" disabled>
+        <button id="searchBtn" onclick="searchSeat()" disabled>
+            系統載入中...
+        </button>
+
+        <div id="result"></div>
+    </div>
+
+    <div class="footer">系統由 GitHub Pages 提供技術支援</div>
+
+    <script>
+        // ==========================================
+        // 🔴 您的 Google Sheet CSV 連結已填入 🔴
+        // ==========================================
+        const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSwUof8LFWJ8_2CAJbSDtr9aYjRlnDD94v0bngYVq5yQ6GQ-2-oxvYgZVODSPX4vhISMDexe9fVPsq-/pub?gid=1996009423&single=true&output=csv';
+        // ==========================================
+
+        let seatData = [];
+
+        // 網頁載入時執行
+        window.onload = function() {
+            Papa.parse(csvUrl, {
+                download: true,
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    seatData = results.data;
+                    console.log("資料載入成功，共 " + seatData.length + " 筆");
+
+                    // 啟用介面
+                    const input = document.getElementById('searchInput');
+                    const btn = document.getElementById('searchBtn');
+                    input.disabled = false;
+                    btn.disabled = false;
+                    btn.innerText = "🔍 立即查詢";
+                    
+                    // 支援按 Enter 查詢
+                    input.addEventListener("keyup", function(e) {
+                        if (e.key === "Enter") searchSeat();
+                    });
+                },
+                error: function(err) {
+                    showError("❌ 無法讀取資料庫<br>請檢查網路連線");
+                }
+            });
+        };
+
+        function searchSeat() {
+            const inputVal = document.getElementById('searchInput').value.trim();
+            const resultDiv = document.getElementById('result');
+            resultDiv.className = "result-box"; 
+            
+            if (!inputVal) {
+                resultDiv.innerHTML = '<span class="error-msg">請輸入姓名！</span>';
+                return;
+            }
+
+            // 模糊搜尋邏輯
+            const found = seatData.filter(item => {
+                // 嘗試抓取 '姓名' 欄位
+                let name = item['姓名'];
+                return name && name.includes(inputVal);
+            });
+
+            if (found.length === 0) {
+                resultDiv.innerHTML = `<span class="error-msg">❌ 找不到「${inputVal}」<br>請確認名字是否有誤</span>`;
+            } else if (found.length === 1) {
+                // 找到單一結果
+                const person = found[0];
+                const seat = person['座位'] || "未指定";
+                const name = person['姓名'];
+                
+                resultDiv.innerHTML = `
+                    <div style="color:#2e7d32;">✅ 查詢成功</div>
+                    <div style="font-size:1.2rem; margin-top:5px;">${name} 先生/小姐</div>
+                    <span class="seat-highlight">${seat}</span>
+                `;
+            } else {
+                // 找到多筆結果
+                let html = '<div class="multi-result"><b>找到多筆資料，請確認：</b><hr style="margin:5px 0; border:0; border-top:1px solid #eee;">';
+                found.forEach(p => {
+                    const s = p['座位'];
+                    const n = p['姓名'];
+                    html += `<div style="padding:4px 0;">👤 ${n} ⮕ <b>${s}</b></div>`;
+                });
+                html += '</div>';
+                resultDiv.innerHTML = html;
+            }
+        }
+
+        function showError(msg) {
+            const r = document.getElementById('result');
+            r.className = "result-box";
+            r.innerHTML = `<span class="error-msg">${msg}</span>`;
+        }
+    </script>
+</body>
+</html>
