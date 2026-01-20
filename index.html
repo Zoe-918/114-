@@ -4,119 +4,94 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>114義消尾牙座位查詢</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/Papa/5.3.0/papaparse.min.js"></script>
     <style>
+        /* 頁面美化設定 */
         body { font-family: "Microsoft JhengHei", "Heiti TC", sans-serif; background-color: #f0f2f5; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
         .container { background: white; padding: 2rem; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 95%; max-width: 480px; text-align: center; }
         h1 { color: #d32f2f; margin-bottom: 5px; font-size: 24px; }
         .subtitle { color: #666; margin-bottom: 25px; font-size: 14px; }
-        /* 輸入框載入時會顯示灰色，避免誤觸 */
-        input[type="text"] { width: 100%; padding: 15px; margin-bottom: 15px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 18px; text-align: center; box-sizing: border-box; transition: 0.3s; }
-        input:disabled { background-color: #f5f5f5; cursor: wait; }
         
+        /* 輸入框與按鈕 */
+        input[type="text"] { width: 100%; padding: 15px; margin-bottom: 15px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 18px; text-align: center; box-sizing: border-box; }
+        input:focus { border-color: #d32f2f; outline: none; }
         button { width: 100%; padding: 15px; background-color: #d32f2f; color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 18px; font-weight: bold; }
-        button:disabled { background-color: #ccc; cursor: not-allowed; }
+        button:hover { background-color: #b71c1c; }
         
+        /* 結果顯示區 */
         #result { margin-top: 25px; padding: 15px; min-height: 80px; }
         .seat-highlight { font-size: 2.5rem; color: #d32f2f; font-weight: 800; display: block; margin: 10px 0; }
         .error-msg { color: #c62828; font-weight: bold; }
         .success-msg { color: #2e7d32; font-weight: bold; font-size: 1.1rem; }
         .multi-result { text-align: left; background: #fafafa; padding: 10px; border-radius: 5px; font-size: 0.9rem; }
-        .footer { margin-top: 20px; color: #888; font-size: 12px; }
+        .footer { margin-top: 30px; color: #aaa; font-size: 12px; }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🧧 114義消尾牙座位查詢</h1>
-        <p class="subtitle">大肚義消分隊．祝您新年快樂</p>
+        <p class="subtitle">輸入姓名即可快速查找桌次</p>
         
-        <input type="text" id="searchInput" placeholder="資料同步中，請稍候..." disabled>
-        <button id="searchBtn" onclick="searchSeat()" disabled>系統連線中...</button>
+        <input type="text" id="searchInput" placeholder="請輸入姓名 (例如：林謙志)">
+        <button onclick="searchSeat()">🔍 立即查詢</button>
         
         <div id="result"></div>
     </div>
-    <div class="footer">資料來源：Google 雲端試算表即時同步</div>
+    <div class="footer">系統由 GitHub Pages 提供技術支援</div>
 
     <script>
         // ==========================================
-        // 🔴 已設定為您指定的最新 CSV 連結
+        // 📋 資料庫區域 (請在此處貼上資料)
         // ==========================================
-        const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSwUof8LFWJ8_2CAJbSDtr9aYjRlnDD94v0bngYVq5yQ6GQ-2-oxvYgZVODSPX4vhISMDexe9fVPsq-/pub?gid=1702570955&single=true&output=csv';
+        const seatData = [
+            
+            // ⬇️⬇️⬇️ 🔴 請將您剛剛複製的整排資料貼在這裡 🔴 ⬇️⬇️⬇️
+            
+            
+            // ⬆️⬆️⬆️ 🔴 貼上範圍結束 🔴 ⬆️⬆️⬆️
+            
+        ];
         // ==========================================
-
-        let seatData = [];
-
-        // 網頁開啟時，自動抓取最新的 Google Sheet 資料
-        window.onload = function() {
-            Papa.parse(csvUrl, {
-                download: true,
-                header: true, // 自動辨識標題 (例如：姓名, 座位)
-                skipEmptyLines: true,
-                complete: function(results) {
-                    seatData = results.data;
-                    console.log("資料載入成功，共 " + seatData.length + " 筆");
-                    
-                    // 資料抓到了，開啟輸入框
-                    const input = document.getElementById('searchInput');
-                    const btn = document.getElementById('searchBtn');
-                    input.disabled = false;
-                    input.placeholder = "請輸入姓名 (例如：林謙志)";
-                    btn.disabled = false;
-                    btn.innerText = "🔍 立即查詢";
-                    
-                    // 綁定 Enter 鍵
-                    input.addEventListener("keyup", function(e) {
-                        if (e.key === "Enter") searchSeat();
-                    });
-                },
-                error: function(err) {
-                    console.error("載入失敗:", err);
-                    document.getElementById('result').innerHTML = '<span class="error-msg">⚠️ 無法讀取資料庫<br>請檢查網路連線</span>';
-                }
-            });
-        };
 
         function searchSeat() {
             const inputVal = document.getElementById('searchInput').value.trim();
             const resultDiv = document.getElementById('result');
             
+            // 清空舊結果
+            resultDiv.innerHTML = "";
+
             if (!inputVal) {
                 resultDiv.innerHTML = '<span class="error-msg">請輸入姓名！</span>';
                 return;
             }
 
-            // 搜尋邏輯：自動抓取 '姓名' 或 'Name' 欄位
+            // 搜尋邏輯 (模糊比對，移除空白)
             const found = seatData.filter(item => {
-                // 嘗試抓取各種可能的姓名欄位名稱
-                let name = item['姓名'] || item['Name'] || item['name'] || Object.values(item)[0]; 
-                return name && name.toString().includes(inputVal);
+                return item.n && item.n.toString().includes(inputVal);
             });
 
             if (found.length === 0) {
                 resultDiv.innerHTML = `<span class="error-msg">❌ 找不到「${inputVal}」<br>請確認姓名是否正確</span>`;
             } else if (found.length === 1) {
                 const p = found[0];
-                // 嘗試抓取各種可能的座位欄位名稱
-                let seat = p['座位'] || p['Seat'] || p['桌次'] || Object.values(p)[1] || "未指定";
-                let name = p['姓名'] || p['Name'] || Object.values(p)[0];
-
                 resultDiv.innerHTML = `
                     <div class="success-msg">✅ 查詢成功</div>
-                    <div style="font-size:1.2rem; margin-top:5px;">${name} 先生/小姐</div>
-                    <span class="seat-highlight">${seat}</span>
+                    <div style="font-size:1.2rem; margin-top:5px;">${p.n} 先生/小姐</div>
+                    <span class="seat-highlight">${p.s}</span>
                 `;
             } else {
-                // 多筆結果
                 let html = '<div class="multi-result"><b>找到多筆資料，請確認：</b><hr style="margin:5px 0; border:0; border-top:1px solid #eee;">';
                 found.forEach(p => {
-                    let seat = p['座位'] || p['Seat'] || p['桌次'] || Object.values(p)[1];
-                    let name = p['姓名'] || p['Name'] || Object.values(p)[0];
-                    html += `<div style="padding:4px 0;">👤 ${name} ⮕ <b>${seat}</b></div>`;
+                    html += `<div style="padding:4px 0;">👤 ${p.n} ⮕ <b>${p.s}</b></div>`;
                 });
                 html += '</div>';
                 resultDiv.innerHTML = html;
             }
         }
+
+        // 支援 Enter 鍵查詢
+        document.getElementById('searchInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') searchSeat();
+        });
     </script>
 </body>
 </html>
