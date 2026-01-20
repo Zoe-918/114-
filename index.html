@@ -31,42 +31,41 @@
         
         <div id="result"></div>
     </div>
-    <div class="footer">系統自動同步 Google 試算表</div>
+    <div class="footer">系統由 GitHub Pages 提供技術支援</div>
 
     <script>
         // ==========================================
-        // 🔴 已填入您指定的最新 CSV 連結 (gid=1702570955)
+        // 🔴 使用 gviz 格式連結，嘗試繞過 Google 封鎖
         // ==========================================
-        const csvUrl = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSwUof8LFWJ8_2CAJbSDtr9aYjRlnDD94v0bngYVq5yQ6GQ-2-oxvYgZVODSPX4vhISMDexe9fVPsq-/pub?gid=1702570955&single=true&output=csv';
+        const csvUrl = 'https://docs.google.com/spreadsheets/d/1lcUytpktXLMGSvgD5U1_YAAQnT9oPTNY6jR3Mi0sdpI/gviz/tq?tqx=out:csv&sheet=list';
         // ==========================================
 
         let seatData = [];
 
-        // 網頁開啟時，自動去抓取資料
         window.onload = function() {
             Papa.parse(csvUrl, {
                 download: true,
-                header: true, // 自動辨識標題列 (姓名、座位)
+                header: true,
                 skipEmptyLines: true,
                 complete: function(results) {
                     seatData = results.data;
-                    console.log("成功載入資料筆數：", seatData.length);
+                    console.log("成功載入筆數：", seatData.length);
                     
-                    // 資料抓到了，開啟輸入框
+                    // 開啟輸入框
                     const input = document.getElementById('searchInput');
                     const btn = document.getElementById('searchBtn');
                     input.disabled = false;
-                    input.placeholder = "請輸入姓名";
+                    input.placeholder = "請輸入姓名 (例如：林謙志)";
                     btn.disabled = false;
                     btn.innerText = "🔍 立即查詢";
                     
-                    // 綁定 Enter 鍵
                     input.addEventListener("keyup", function(e) {
                         if (e.key === "Enter") searchSeat();
                     });
                 },
                 error: function(err) {
-                    document.getElementById('result').innerHTML = '<span class="error-msg">❌ 資料庫連線失敗<br>請檢查網路或試算表連結</span>';
+                    console.error("載入失敗", err);
+                    document.getElementById('result').innerHTML = '<span class="error-msg">❌ 連線失敗<br>Google 拒絕了連線，請改用「方案二」</span>';
                 }
             });
         };
@@ -80,9 +79,8 @@
                 return;
             }
 
-            // 搜尋邏輯：自動抓取 '姓名' 或 'Name' 欄位
             const found = seatData.filter(item => {
-                // 嘗試多種可能的欄位名稱，確保一定抓得到
+                // 自動抓取所有可能的欄位名稱
                 let name = item['姓名'] || item['Name'] || item['name'] || Object.values(item)[0]; 
                 return name && name.toString().includes(inputVal);
             });
@@ -91,7 +89,6 @@
                 resultDiv.innerHTML = `<span class="error-msg">❌ 找不到「${inputVal}」<br>請確認姓名是否正確</span>`;
             } else if (found.length === 1) {
                 const p = found[0];
-                // 嘗試多種可能的座位欄位名稱
                 let seat = p['座位'] || p['Seat'] || p['桌次'] || Object.values(p)[1] || "未指定";
                 let name = p['姓名'] || p['Name'] || Object.values(p)[0];
 
@@ -101,7 +98,6 @@
                     <span class="seat-highlight">${seat}</span>
                 `;
             } else {
-                // 多筆結果
                 let html = '<div class="multi-result"><b>找到多筆資料，請確認：</b><hr style="margin:5px 0; border:0; border-top:1px solid #eee;">';
                 found.forEach(p => {
                     let seat = p['座位'] || p['Seat'] || Object.values(p)[1];
