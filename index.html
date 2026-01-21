@@ -3,208 +3,313 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>114義消尾牙座位查詢</title>
+    <title>114義消尾牙 - 桌位查詢系統</title>
     <style>
-        body { font-family: "Microsoft JhengHei", "Heiti TC", sans-serif; background-color: #f0f2f5; display: flex; flex-direction: column; align-items: center; min-height: 100vh; margin: 0; padding: 20px; }
-        .container { background: white; padding: 2rem; border-radius: 16px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); width: 95%; max-width: 480px; text-align: center; }
-        h1 { color: #d32f2f; margin-bottom: 5px; font-size: 24px; }
-        .subtitle { color: #666; margin-bottom: 25px; font-size: 14px; }
-        input[type="text"] { width: 100%; padding: 15px; margin-bottom: 15px; border: 2px solid #e0e0e0; border-radius: 10px; font-size: 18px; text-align: center; box-sizing: border-box; }
-        button { width: 100%; padding: 15px; background-color: #d32f2f; color: white; border: none; border-radius: 10px; cursor: pointer; font-size: 18px; font-weight: bold; }
-        #result { margin-top: 25px; padding: 15px; min-height: 80px; }
-        .seat-highlight { font-size: 2.5rem; color: #d32f2f; font-weight: 800; display: block; margin: 10px 0; }
-        .error-msg { color: #c62828; font-weight: bold; }
-        .success-msg { color: #2e7d32; font-weight: bold; font-size: 1.1rem; }
-        .multi-result { text-align: left; background: #fafafa; padding: 10px; border-radius: 5px; font-size: 0.9rem; }
-        .footer { margin-top: 20px; color: #888; font-size: 12px; }
+        :root {
+            --primary-gold: #d4af37;
+            --primary-red: #c0392b;
+            --bg-color: #fdf5e6;
+            --table-main: #e74c3c;   /* 主桌紅 */
+            --table-vip: #f39c12;    /* 貴賓金 */
+            --table-guest: #27ae60;  /* 一般綠 */
+            --table-blue: #2980b9;   /* 警消藍 */
+            --aisle-width: 60px;
+        }
+
+        body {
+            font-family: "Microsoft JhengHei", "Heiti TC", sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+
+        h1 {
+            color: #444;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        /* 搜尋框區域 */
+        .control-panel {
+            position: sticky;
+            top: 0;
+            background: rgba(253, 245, 230, 0.95);
+            padding: 15px;
+            z-index: 100;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        input[type="text"] {
+            padding: 12px 20px;
+            width: 90%;
+            max-width: 400px;
+            border: 2px solid #ccc;
+            border-radius: 30px;
+            font-size: 16px;
+            outline: none;
+            transition: all 0.3s;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--primary-red);
+            box-shadow: 0 0 8px rgba(192, 57, 43, 0.3);
+        }
+
+        /* 舞台 */
+        .stage {
+            width: 80%;
+            max-width: 800px;
+            height: 60px;
+            background: linear-gradient(to bottom, #333, #000);
+            color: gold;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 0 0 20px 20px;
+            margin: 20px 0 40px 0;
+            font-weight: bold;
+            font-size: 1.2em;
+            letter-spacing: 5px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+
+        /* 座位圖網格 */
+        .seating-chart {
+            display: grid;
+            /* 9列佈局：左1, 左2, [星光大道], 右中1, 右中2, [走道], 右1, 右2, 右3 */
+            grid-template-columns: 80px 80px var(--aisle-width) 80px 80px var(--aisle-width) 80px 80px 80px;
+            gap: 12px;
+            position: relative;
+            margin-bottom: 100px;
+        }
+
+        /* 桌子樣式 */
+        .table {
+            border-radius: 50%;
+            height: 80px;
+            width: 80px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 12px;
+            cursor: pointer;
+            transition: transform 0.2s;
+            text-align: center;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.15);
+            border: 3px solid rgba(255,255,255,0.5);
+            position: relative;
+            color: white;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.3);
+        }
+
+        .table:hover {
+            transform: scale(1.15);
+            z-index: 10;
+        }
+
+        /* 桌子顏色分類 */
+        .t-main { background-color: var(--table-main); } /* 主桌 */
+        .t-vip { background-color: var(--table-vip); }   /* 貴賓/顧問/副團 */
+        .t-org { background-color: var(--table-blue); }  /* 分隊/單位 */
+        .t-guest { background-color: var(--table-guest); } /* 親友/其他 */
+
+        .table-num {
+            font-size: 18px;
+            font-weight: 900;
+            line-height: 1;
+        }
+        .table-name {
+            font-size: 11px;
+            margin-top: 2px;
+            line-height: 1.1;
+            max-width: 90%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        /* 搜尋高亮 */
+        .table.highlight {
+            background-color: #e74c3c !important; /* 強制紅色 */
+            box-shadow: 0 0 20px #e74c3c;
+            transform: scale(1.2);
+            z-index: 20;
+            animation: pulse 1s infinite alternate;
+        }
+
+        @keyframes pulse {
+            from { box-shadow: 0 0 10px #e74c3c; }
+            to { box-shadow: 0 0 30px #e74c3c; }
+        }
+
+        /* 走道文字 */
+        .aisle-label {
+            grid-row: 1 / span 8;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            writing-mode: vertical-rl;
+            color: #aaa;
+            font-weight: bold;
+            letter-spacing: 8px;
+            pointer-events: none;
+            font-size: 14px;
+        }
+
+        /* 入口標示 */
+        .entrance-marker {
+            grid-column: 6; /* 對應右邊走道 */
+            grid-row: 9;    /* 最下方 */
+            text-align: center;
+            font-weight: bold;
+            color: var(--primary-red);
+            margin-top: 10px;
+        }
+
+        /* 彈出視窗 */
+        #modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            backdrop-filter: blur(2px);
+        }
+
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            width: 320px;
+            max-height: 80vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            from { opacity: 0; transform: scale(0.8); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        
+        .modal-header h2 { margin: 0; color: #333; font-size: 1.5em; }
+        
+        .close-btn {
+            background: none; border: none; font-size: 28px; cursor: pointer; color: #999;
+        }
+        
+        .guest-list {
+            overflow-y: auto;
+            flex-grow: 1;
+            padding-right: 5px;
+        }
+
+        .guest-item {
+            padding: 8px 10px;
+            border-bottom: 1px solid #f5f5f5;
+            color: #555;
+            font-size: 1.1em;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .guest-item:last-child { border-bottom: none; }
+
+        .guest-note {
+            font-size: 0.8em;
+            color: #888;
+            background: #eee;
+            padding: 2px 6px;
+            border-radius: 10px;
+        }
+
+        .highlight-text {
+            color: red;
+            font-weight: bold;
+            background-color: #ffe6e6;
+        }
+
+        /* 手機版優化 */
+        @media (max-width: 800px) {
+            .seating-chart {
+                transform: scale(0.9);
+                transform-origin: top center;
+            }
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>🧧 114義消尾牙座位查詢</h1>
-        <p class="subtitle">輸入姓名即可快速查找桌次</p>
-        <input type="text" id="searchInput" placeholder="請輸入姓名 (例如：王小明)">
-        <button onclick="searchSeat()">🔍 立即查詢</button>
-        <div id="result"></div>
+
+    <div class="control-panel">
+        <h1>114 義消尾牙座次表</h1>
+        <input type="text" id="searchInput" placeholder="搜尋姓名、單位 (例如：林謙志、議員、風電)">
     </div>
-    <div class="footer">資料來源：114義消尾牙座位表 (更新於 2026/01/20)</div>
+
+    <div class="stage">舞 台 (Stage)</div>
+
+    <div class="seating-chart" id="chart">
+        <div class="aisle-label" style="grid-column: 3;">★ 星光大道 ★</div>
+        <div class="aisle-label" style="grid-column: 6;">走道</div>
+        
+        <div class="entrance-marker">
+            <div style="font-size:24px;">⬆</div>
+            入口
+        </div>
+    </div>
+
+    <div id="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 id="modalTitle">桌號</h2>
+                <button class="close-btn" onclick="closeModal()">×</button>
+            </div>
+            <div class="guest-list" id="modalGuests">
+                </div>
+        </div>
+    </div>
 
     <script>
         // ==========================================
-        // 📋 114 義消尾牙完整座位清單 (已更新真實資料)
-        // 共 129 筆資料，包含主桌、貴賓桌、分隊桌次
+        // 1. 資料庫 (整合您提供的最新名單)
         // ==========================================
-        const seatData = [
-            { "n": "港務消防大隊 大隊長 林謙志", "s": "主桌1" },
-            { "n": "港務義消總隊 總隊長 駱啟明", "s": "主桌1" },
-            { "n": "臺中市政府消防局 局長 孫福佑", "s": "主桌1" },
-            { "n": "經濟部產業園區管理局分局長 陳高尚(1-7)", "s": "主桌1" },
-            { "n": "海巡署中部分署 (1-29) 副分署長 林志宏", "s": "主桌1" },
-            { "n": "台中市義消婦宣 大隊長 吳瓊華 (議員)", "s": "主桌1" },
-            { "n": "臺中港義消大隊 大隊長 孫文山", "s": "主桌1" },
-            { "n": "臺中港務義消大隊 顧問團長 王俊傑", "s": "主桌1" },
-            { "n": "台中港務分公司 港務長(1-3) 魏福添", "s": "主桌1" },
-            { "n": "航港局 中部航務中心 主任 張家豪(1-8)", "s": "主桌1" },
-            { "n": "調查局航業調查處 處長 李文義(1-3)", "s": "主桌1" },
-            { "n": "臺中港務警察總隊 總隊長 游永中", "s": "主桌1" },
-            { "n": "★港務消防大隊 臺中港隊長 陳俊青", "s": "主桌2 (議員)" },
-            { "n": "臺中區漁會 理事長趙彬然", "s": "主桌2 (議員)" },
-            { "n": "基隆港務義消大隊 大隊長 林瑞才", "s": "主桌2 (議員)" },
-            { "n": "關務署臺中關 副關務長 賴俊男", "s": "主桌2 (議員)" },
-            { "n": "臺中港務警察總隊 副總隊長 曾百溪 (2-11)", "s": "主桌2 (議員)" },
-            { "n": "林昊佑議員 (議員代表)", "s": "主桌2 (議員)" },
-            { "n": "首席顧問 林茂發", "s": "主桌2 (議員)" },
-            { "n": "台中市市議會 議長助理 張東玄", "s": "主桌2 (議員)" },
-            { "n": "第四救災救護大隊 大隊長 吳進宗", "s": "主桌2 (議員)" },
-            { "n": "臺中港科技產業園區廠協會(2-7) 理事長 陳義方", "s": "主桌2 (議員)" },
-            { "n": "關務署臺中關 前關務長 陳木生", "s": "主桌2 (議員)" },
-            { "n": "張家銨議員 (議員代表)", "s": "主桌2 (議員)" },
-            { "n": "港務消防大隊 前臺中港隊長 曾星明", "s": "貴賓桌3" },
-            { "n": "後憲保全X2 董事長 林暉智", "s": "貴賓桌3" },
-            { "n": "調查局航業調查處 主任 沈明賢X3 (1-3)", "s": "貴賓桌3" },
-            { "n": "台中港務公司 港務處副處長 李文彬(1-3)", "s": "貴賓桌3" },
-            { "n": "中聯油脂X2 董事長 蔡清松 總經理 余凌冲", "s": "貴賓桌3" },
-            { "n": "關務署臺中關 簡任稽核 張道銘", "s": "貴賓桌3" },
-            { "n": "★港務消防大隊 臺中港副隊長 王志龍", "s": "貴賓桌4 (風電)" },
-            { "n": "防風林分隊 分隊長 洪瑞添", "s": "貴賓桌4 (風電)" },
-            { "n": "大明海事工程 高級技師 黃憲章", "s": "貴賓桌4 (風電)" },
-            { "n": "世紀樺欣風能 總經理 黃國誌", "s": "貴賓桌4 (風電)" },
-            { "n": "天力離岸風電 資深管理師 廖光政", "s": "貴賓桌4 (風電)" },
-            { "n": "偉聯國際倉儲 總經理 林永晟", "s": "貴賓桌4 (風電)" },
-            { "n": "大川吉海事 總經理 許鴻茗", "s": "貴賓桌4 (風電)" },
-            { "n": "巧貹機械 董事長 喬永福", "s": "貴賓桌4 (風電)" },
-            { "n": "永康船舶X2 總經理 孫境堯", "s": "貴賓桌4 (風電)" },
-            { "n": "公益大使 林美秀", "s": "副團長桌5" },
-            { "n": "京揚國際X2 副總經理 林曼莉", "s": "副團長桌5" },
-            { "n": "東森國際 協理 黃章一", "s": "副團長桌5" },
-            { "n": "餘慶堂興業(5-9) 廠長 陳德聰(全素)", "s": "副團長桌5" },
-            { "n": "優泥來(5-10) 總經理 王順元", "s": "副團長桌5" },
-            { "n": "中聯資源X2 經理 高貴美", "s": "副團長桌5" },
-            { "n": "港務消防大隊 高雄港隊長 洪偉欽", "s": "貴賓桌6" },
-            { "n": "★警消 退休人員 張文烈", "s": "貴賓桌6" },
-            { "n": "第三(臺中)海巡隊 副隊長 許宥鈞 (6-11)", "s": "貴賓桌6" },
-            { "n": "海巡署第三岸巡隊 副隊長 許博任 (6-39)", "s": "貴賓桌6" },
-            { "n": "海軍第四布雷艇 中隊長 古崇序 (6-39)", "s": "貴賓桌6" },
-            { "n": "搶救訓練科 專員 賴景民", "s": "貴賓桌6" },
-            { "n": "港務消防大隊 基隆港副隊長 吳俊毅", "s": "貴賓桌6" },
-            { "n": "捷昕法律 律師 陳寓綸", "s": "貴賓桌6" },
-            { "n": "特種搜救隊 科員余家均", "s": "貴賓桌6" },
-            { "n": "第一中隊 中隊長 張介堂", "s": "顧問桌7" },
-            { "n": "臺中港科技產業園區廠協會(2-7) 總幹事 楊朝凱", "s": "顧問桌7" },
-            { "n": "產業園區管理局 臺中分局X2 科長 劉純娟(1-7)", "s": "顧問桌7" },
-            { "n": "元成化工(1-7-10) 總經理 蔡青榕", "s": "顧問桌7" },
-            { "n": "邦尼國際(7-27) 董事長 廖世義", "s": "顧問桌7" },
-            { "n": "團長朋友 施隆昌X2", "s": "顧問桌7" },
-            { "n": "西碼頭分隊 分隊長 陳世昌", "s": "顧問桌8" },
-            { "n": "國耀船務X2 張家華經理(全素) 陳文宗經理(素食)", "s": "顧問桌8" },
-            { "n": "航港局 中部航務中心 技士 游世雍(1-8)", "s": "顧問桌8" },
-            { "n": "長榮國際 課長 黃盛業X2", "s": "顧問桌8" },
-            { "n": "世華交通 董事長 王詠建", "s": "顧問桌8" },
-            { "n": "大誠保險經紀人 副總 陶明揚X2", "s": "顧問桌8" },
-            { "n": "總幹事 紀穎龍", "s": "顧問桌9" },
-            { "n": "紹琪實業 經理 陳厚諭X2", "s": "顧問桌9" },
-            { "n": "鐶琪塑膠 課長 李彥鋒", "s": "顧問桌9" },
-            { "n": "穎洋企業 工務主任 郭明原X2", "s": "顧問桌9" },
-            { "n": "國盛模座 董事長 張耀潭X2", "s": "顧問桌9" },
-            { "n": "副大隊長 郭庭興", "s": "顧問桌9" },
-            { "n": "第一分隊 分隊長 張春洲", "s": "顧問桌10" },
-            { "n": "元成化工(1-7-10) 童經理X3", "s": "顧問桌10" },
-            { "n": "理盛精密(7-10) 室長 戶張龍一 X2", "s": "顧問桌10" },
-            { "n": "東和鋼鐵 主管 蕭梓芮X2", "s": "顧問桌10" },
-            { "n": "優泥來(5-10) 廠長 張晉維", "s": "顧問桌10" },
-            { "n": "★警消小隊長 江東英", "s": "顧問桌10" },
-            { "n": "南堤分隊 分隊長 王慶陸", "s": "貴賓桌11" },
-            { "n": "海巡署第三岸巡隊 梧棲安檢所 所長張熙坤", "s": "貴賓桌11" },
-            { "n": "海巡署第三岸巡隊 台中商港安檢所 所長洪崑峯", "s": "貴賓桌11" },
-            { "n": "海巡署第三岸巡隊X2 二組組主任 張書凱 傳令", "s": "貴賓桌11" },
-            { "n": "前會計主任 廖秀娥", "s": "貴賓桌11" },
-            { "n": "臺中港務警察總隊 副中隊長 王泰文 (2-11)", "s": "貴賓桌11" },
-            { "n": "■基隆港X4", "s": "四大港桌 12" },
-            { "n": "西碼頭分隊X2", "s": "四大港桌 12" },
-            { "n": "★警消X2", "s": "四大港桌 12" },
-            { "n": "警消退休人員X2 周朝祥、蔡賢廸", "s": "四大港桌 12" },
-            { "n": "■基隆港X4", "s": "四大港桌 13" },
-            { "n": "■高雄港X2", "s": "四大港桌 13" },
-            { "n": "★警消X2", "s": "四大港桌 13" },
-            { "n": "★警消 專員 黃敬雲", "s": "四大港桌 13" },
-            { "n": "技術顧問 朱榮聰", "s": "四大港桌 13" },
-            { "n": "臺中港務義消大隊大隊長夫人", "s": "親友桌 14" },
-            { "n": "岳父岳母X2", "s": "親友桌 14" },
-            { "n": "孫媽媽", "s": "親友桌 14" },
-            { "n": "淑君老師X4", "s": "親友桌 14" },
-            { "n": "緻瑋X3", "s": "親友桌 14" },
-            { "n": "副總幹事 謝東曉X2", "s": "親友桌 15" },
-            { "n": "孫倚文X4 1大2小", "s": "親友桌 15" },
-            { "n": "孫倚琳", "s": "親友桌 15" },
-            { "n": "孫文川X3", "s": "親友桌 15" },
-            { "n": "懿慧", "s": "親友桌 15" },
-            { "n": "吳宏健", "s": "親友桌 15" },
-            { "n": "第四/大肚/龍井/沙鹿/梧棲/清水/清泉/犁份/海爆", "s": "第四大隊 17-25" },
-            { "n": "第一中隊X19", "s": "第一中隊 26-27 (20-1人)" },
-            { "n": "邦尼國際(7-27) 隨行人員", "s": "第一中隊 26-27 (20-1人)" },
-            { "n": "第二中隊 中隊長 陳思學", "s": "第二中隊 28" },
-            { "n": "中國貨櫃 X3 副總經理 郭丁湖", "s": "第二中隊 28" },
-            { "n": "來大X2 經理 陳科賓 課長 鄭紫妤", "s": "第二中隊 28" },
-            { "n": "德隆倉儲X2", "s": "第二中隊 28" },
-            { "n": "第二中隊 副中隊長 吳慶章", "s": "第二中隊 28" },
-            { "n": "海巡署中部分署 隨行人員(1-29)", "s": "第二中隊 28" },
-            { "n": "第一分隊X20", "s": "第一分隊 (28-1人) 29-30" },
-            { "n": "(第一X7 →32桌)", "s": "第一分隊 (28-1人) 29-30" },
-            { "n": "南堤分隊X10", "s": "南堤分隊 (14-1人) 31" },
-            { "n": "(南堤X3→39桌)", "s": "南堤分隊 (14-1人) 31" },
-            { "n": "防風林分隊X3", "s": "合桌 32" },
-            { "n": "第一分隊X7", "s": "合桌 32" },
-            { "n": "防風林分隊X10", "s": "防風林 (30-7人) 33" },
-            { "n": "防風林分隊X10", "s": "防風林 (30-7人) 34" },
-            { "n": "西碼頭分隊X10", "s": "西碼頭 (41-2人) 35" },
-            { "n": "西碼頭分隊X38", "s": "西碼頭 (41-1人) 36" },
-            { "n": "永聖王小姐X2", "s": "西碼頭 (41-1人) 36" },
-            { "n": "(西碼頭X2→12桌)", "s": "西碼頭 (41-1人) 36" },
-            { "n": "西碼頭分隊X10", "s": "西碼頭 (41-1人) 37" },
-            { "n": "西碼頭分隊X10", "s": "西碼頭 (41-1人) 38" },
-            { "n": "中龍分隊X5", "s": "中龍分隊 (15人) 39" },
-            { "n": "南堤分隊X3", "s": "中龍分隊 (15人) 39" },
-            { "n": "海軍第四布雷艇 隨行人員", "s": "中龍分隊 (15人) 39" },
-            { "n": "第三(臺中)海巡隊 隊員", "s": "中龍分隊 (15人) 39" },
-            { "n": "中龍分隊X10", "s": "中龍分隊 (15人) 40"}
-        ];
+        const tablesData = [
+            // --- Row 1 (貼近舞台) ---
+            { id: '15', name: '親友桌', type: 't-guest', r: 1, c: 1, guests: ['大隊長夫人','岳父','岳母','孫媽媽','淑君老師*4','緻瑋*3'] },
+            { id: '1',  name: '主桌',   type: 't-main',  r: 1, c: 2, guests: ['林謙志','駱啟明','孫福佑','陳高尚','林志宏','王俊傑','孫文山','游永中','魏福添','張家豪','李文義','議員'] },
+            { id: '2',  name: '主桌',   type: 't-main',  r: 1, c: 4, guests: ['陳俊青(議員)','曾百溪(議員)','林瑞才(議員)','賴俊男(議員)','吳瓊華(議員)','林昊佑(議員)','陳木生(議員)','張東玄(議員)','許修豪(議員)','陳義方(議員)','林孟令(議員)','張家銨(議員)'] },
 
-        function searchSeat() {
-            const inputVal = document.getElementById('searchInput').value.trim();
-            const resultDiv = document.getElementById('result');
-            
-            if (!inputVal) {
-                resultDiv.innerHTML = '<span class="error-msg">請輸入姓名！</span>';
-                return;
-            }
+            // --- Row 2 (右邊退後一格，與副團長齊平) ---
+            { id: '16', name: '親友桌', type: 't-guest', r: 2, c: 1, guests: ['謝東曉*2','孫倚文*4','孫倚琳','孫文川*3','懿慧','吳宏健'] },
+            { id: '3',  name: '貴賓',   type: 't-vip',   r: 2, c: 2, guests: ['曾星明','林暉智*2','沈明賢*3','李文彬','蘇泓維','張道銘'] },
+            // (Space)
+            { id: '4',  name: '副團長', type: 't-vip',   r: 2, c: 4, guests: ['林美秀','林曼莉*2','黃章一','陳德聰','王順元','高貴美*2'] },
+            { id: '5',  name: '風電',   type: 't-vip',   r: 2, c: 5, guests: ['王志龍','洪瑞添','黃憲章','黃國誌','廖光政','林永晟','許鴻茗','喬永福','李武勳','王志文'] },
+            // (Space)
+            { id: '13', name: '四港',   type: 't-org',   r: 2, c: 7, guests: ['基隆港*4','西碼頭分隊*2','警消*2','周朝祥','隨行人員'] },
+            { id: 'No1',name: '第四',   type: 't-org',   r: 2, c: 8, guests: ['第四救災救護大隊'] },
+            { id: 'No2',name: '清泉',   type: 't-org',   r: 2, c: 9, guests: ['清泉分隊(待補)'] }, // 名單未詳列，依圖保留位置
 
-            // 搜尋名單 (支援部分比對)
-            const found = seatData.filter(item => item.n.includes(inputVal));
-
-            if (found.length === 0) {
-                resultDiv.innerHTML = `<span class="error-msg">❌ 找不到「${inputVal}」<br>請確認姓名是否正確</span>`;
-            } else if (found.length === 1) {
-                const p = found[0];
-                resultDiv.innerHTML = `
-                    <div class="success-msg">✅ 查詢成功</div>
-                    <div style="font-size:1.2rem; margin-top:5px;">${p.n} 先生/小姐</div>
-                    <span class="seat-highlight">${p.s}</span>
-                `;
-            } else {
-                // 如果有多筆結果 (例如搜尋「林」)
-                let html = '<div class="multi-result"><b>找到多筆資料，請確認：</b><hr style="margin:5px 0; border:0; border-top:1px solid #eee;">';
-                found.forEach(p => {
-                    html += `<div style="padding:4px 0;">👤 ${p.n} ⮕ <b>${p.s}</b></div>`;
-                });
-                html += '</div>';
-                resultDiv.innerHTML = html;
-            }
-        }
-
-        // 支援 Enter 鍵
-        document.getElementById('searchInput').addEventListener('keypress', function (e) {
-            if (e.key === 'Enter') searchSeat();
-        });
-    </script>
-</body>
-</html>
+            // --- Row 3 ---
+            { id: '17', name: '守望',   type: 't-org',   r: 3, c: 1, guests: ['大肚守望相助隊'] },
+            { id: '6',  name: '貴賓',   type: 't
