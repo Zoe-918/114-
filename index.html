@@ -60,14 +60,14 @@
         /* --- 地圖顯示區域 (Viewport) --- */
         .map-viewport {
             flex-grow: 1;
-            overflow: hidden; /* 改為 hidden，由 JS 控制拖曳 */
+            overflow: hidden; 
             position: relative;
             background-color: #f4f4f4;
             background-image: radial-gradient(#ddd 1px, transparent 1px);
             background-size: 20px 20px;
-            cursor: grab; /* 預設手形 */
+            cursor: grab; 
             display: flex;
-            justify-content: center;
+            justify-content: center; /* 讓內容水平置中 */
             align-items: flex-start;
         }
 
@@ -75,11 +75,12 @@
 
         /* --- 可縮放的內容容器 --- */
         .zoom-wrapper {
-            transition: transform 0.1s ease-out; /* 移除彈性效果讓拖曳更跟手 */
-            transform-origin: center top;
+            transition: transform 0.2s cubic-bezier(0.25, 0.46, 0.45, 0.94); /* 恢復一點平滑過渡 */
+            transform-origin: center top; /* 從上方中間開始縮放 */
             padding: 40px;
             padding-bottom: 150px;
-            min-width: 800px; /* 確保內容有寬度 */
+            min-width: 900px; /* 確保內容有足夠寬度不被擠壓 */
+            box-sizing: border-box;
         }
 
         /* 舞台 */
@@ -102,7 +103,6 @@
         /* 座位圖網格 */
         .seating-chart {
             display: grid;
-            /* 9列佈局：左1, 左2, [星光大道], 右中1, 右中2, [走道], 右1, 右2, 右3 */
             grid-template-columns: 80px 80px var(--aisle-width) 80px 80px var(--aisle-width) 80px 80px 80px;
             gap: 15px;
             justify-content: center;
@@ -126,10 +126,9 @@
             color: white;
             text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
             transition: all 0.3s;
-            user-select: none; /* 防止拖曳時選取文字 */
+            user-select: none; 
         }
 
-        /* 顏色分類 */
         .t-main { background-color: var(--table-main); }
         .t-vip { background-color: var(--table-vip); }
         .t-org { background-color: var(--table-org); }
@@ -139,49 +138,13 @@
         .table-name { font-size: 11px; margin-top: 2px; line-height: 1.1; overflow: hidden; white-space: nowrap; width: 90%; text-overflow: ellipsis;}
 
         /* --- 搜尋特效 --- */
-        .table.dimmed {
-            opacity: 0.15;
-            filter: grayscale(100%);
-            transform: scale(0.9);
-        }
-
-        .table.highlight {
-            opacity: 1 !important;
-            filter: none;
-            z-index: 100;
-            transform: scale(1.3);
-            box-shadow: 0 0 0 5px #fff, 0 0 20px var(--primary-red);
-            animation: bounce 1s infinite;
-        }
-
-        @keyframes bounce {
-            0%, 100% { transform: scale(1.3); }
-            50% { transform: scale(1.4); }
-        }
+        .table.dimmed { opacity: 0.15; filter: grayscale(100%); transform: scale(0.9); }
+        .table.highlight { opacity: 1 !important; filter: none; z-index: 100; transform: scale(1.3); box-shadow: 0 0 0 5px #fff, 0 0 20px var(--primary-red); animation: bounce 1s infinite; }
+        @keyframes bounce { 0%, 100% { transform: scale(1.3); } 50% { transform: scale(1.4); } }
 
         /* 走道文字 */
-        .aisle-label {
-            grid-row: 1 / span 8;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            writing-mode: vertical-rl;
-            color: #aaa;
-            font-weight: bold;
-            letter-spacing: 10px;
-            pointer-events: none;
-            font-size: 16px;
-        }
-
-        .entrance-marker {
-            grid-column: 6;
-            grid-row: 9;
-            text-align: center;
-            font-weight: bold;
-            color: var(--primary-red);
-            margin-top: 10px;
-            font-size: 1.2em;
-        }
+        .aisle-label { grid-row: 1 / span 8; display: flex; justify-content: center; align-items: center; writing-mode: vertical-rl; color: #aaa; font-weight: bold; letter-spacing: 10px; pointer-events: none; font-size: 16px; }
+        .entrance-marker { grid-column: 6; grid-row: 9; text-align: center; font-weight: bold; color: var(--primary-red); margin-top: 10px; font-size: 1.2em; }
 
         /* --- 縮放控制按鈕 --- */
         .zoom-controls {
@@ -210,41 +173,18 @@
             transition: background 0.2s;
         }
         .zoom-btn:active { background: #eee; }
+        
+        .fit-text { font-size: 14px; font-weight: bold; }
 
         /* --- 彈出視窗 --- */
-        #modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.6);
-            justify-content: center;
-            align-items: center;
-            z-index: 1000;
-            backdrop-filter: blur(2px);
-        }
-
-        .modal-content {
-            background: white;
-            padding: 25px;
-            border-radius: 15px;
-            width: 85%;
-            max-width: 320px;
-            max-height: 80vh;
-            display: flex;
-            flex-direction: column;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-            animation: popIn 0.3s;
-        }
-        
+        #modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(2px); }
+        .modal-content { background: white; padding: 25px; border-radius: 15px; width: 85%; max-width: 320px; max-height: 80vh; display: flex; flex-direction: column; box-shadow: 0 10px 25px rgba(0,0,0,0.3); animation: popIn 0.3s; }
         @keyframes popIn { from { transform: scale(0.8); opacity: 0; } to { transform: scale(1); opacity: 1; } }
-
         .modal-header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-bottom: 10px; }
         .close-btn { background: none; border: none; font-size: 28px; cursor: pointer; color: #999; }
-        
         .guest-list { overflow-y: auto; flex-grow: 1; }
         .guest-item { padding: 10px; border-bottom: 1px solid #f5f5f5; font-size: 1.1em; display: flex; justify-content: space-between; }
         .guest-note { font-size: 0.8em; color: #888; background: #eee; padding: 2px 6px; border-radius: 10px; }
-        
         .highlight-text { color: red; font-weight: bold; background: #ffe6e6; padding: 0 4px; border-radius: 3px; }
     </style>
 </head>
@@ -274,7 +214,7 @@
     <div class="zoom-controls">
         <button class="zoom-btn" onclick="zoomIn()">+</button>
         <button class="zoom-btn" onclick="zoomOut()">−</button>
-        <button class="zoom-btn" onclick="resetZoom()" style="font-size:16px; font-weight:bold;">1:1</button>
+        <button class="zoom-btn fit-text" onclick="resetZoom()">1：1</button>
     </div>
 
     <div id="modal">
@@ -288,11 +228,8 @@
     </div>
 
     <script>
-        // ==========================================
-        // 1. 完整資料庫 (已修正逗號錯誤)
-        // ==========================================
         const tablesData = [
-            // Row 1
+             // Row 1
             { id: '15', name: '親友桌', type: 't-guest', r: 1, c: 1, guests: ['大隊長夫人','岳父','岳母','淑君老師*4','謝東曉*2','緻瑋*3'] },
             { id: '1',  name: '主桌',   type: 't-main',  r: 1, c: 2, guests: ['林謙志','駱啟明','孫福佑','陳高尚','林志宏','王俊傑','孫文山','游永中','魏福添','梁又文','李文義','議員'] },
             { id: '2',  name: '主桌',   type: 't-main',  r: 1, c: 4, guests: ['陳俊青','曾百溪','林瑞才','賴俊男','吳瓊華','林昊佑','陳木生','張東玄','許修豪','陳義方','林孟令','鄭文賓','張家銨'] },
@@ -352,9 +289,8 @@
         const zoomWrapper = document.getElementById('zoomWrapper');
         const mapViewport = document.getElementById('mapViewport');
 
-        // 縮放功能
         function updateZoom() {
-            zoomWrapper.style.transform = `scale(${currentScale}) translate(0, 0)`; // translate 避免縮放時跑掉
+            zoomWrapper.style.transform = `scale(${currentScale}) translate(0, 0)`;
         }
 
         function zoomIn() {
@@ -363,18 +299,33 @@
         }
 
         function zoomOut() {
-            if (currentScale > 0.4) {
+            if (currentScale > 0.3) {
                 currentScale -= 0.2;
                 updateZoom();
             }
         }
 
+        // 修改後的 "最適大小" 邏輯
         function resetZoom() {
-            currentScale = 1.0;
-            zoomWrapper.style.transform = `scale(1)`;
-            // 重置捲動
-            mapViewport.scrollLeft = (zoomWrapper.offsetWidth - mapViewport.offsetWidth) / 2;
+            // 我們的內容設計寬度大約是 900px (舞台800 + 邊距)
+            const contentWidth = 950; 
+            const viewportWidth = mapViewport.offsetWidth;
+
+            // 計算能夠塞滿寬度的比例
+            let fitScale = (viewportWidth / contentWidth) * 0.95; // 0.95 是留一點點邊邊
+
+            // 電腦螢幕很大時，不要放太大，保持 1.0 即可
+            if (fitScale > 1.2) fitScale = 1.0;
+            
+            // 手機如果非常窄，也設定一個最小值，避免太小看不見
+            if (fitScale < 0.25) fitScale = 0.25;
+
+            currentScale = fitScale;
+            updateZoom();
+
+            // 將捲軸歸零，回到最上方中間
             mapViewport.scrollTop = 0;
+            mapViewport.scrollLeft = 0;
         }
 
         // 滑鼠拖曳 (Drag to Scroll)
@@ -393,22 +344,15 @@
             scrollTop = mapViewport.scrollTop;
         });
 
-        mapViewport.addEventListener('mouseleave', () => {
-            isDown = false;
-            mapViewport.style.cursor = 'grab';
-        });
-
-        mapViewport.addEventListener('mouseup', () => {
-            isDown = false;
-            mapViewport.style.cursor = 'grab';
-        });
+        mapViewport.addEventListener('mouseleave', () => { isDown = false; mapViewport.style.cursor = 'grab'; });
+        mapViewport.addEventListener('mouseup', () => { isDown = false; mapViewport.style.cursor = 'grab'; });
 
         mapViewport.addEventListener('mousemove', (e) => {
             if (!isDown) return;
             e.preventDefault();
             const x = e.pageX - mapViewport.offsetLeft;
             const y = e.pageY - mapViewport.offsetTop;
-            const walkX = (x - startX) * 1.5; // 移動速度係數
+            const walkX = (x - startX) * 1.5;
             const walkY = (y - startY) * 1.5;
             mapViewport.scrollLeft = scrollLeft - walkX;
             mapViewport.scrollTop = scrollTop - walkY;
@@ -434,30 +378,25 @@
                 div.style.gridRow = table.r;
                 div.style.gridColumn = table.c;
                 div.innerHTML = `<div class="table-num">${table.id}</div><div class="table-name">${table.name}</div>`;
-                
                 div.dataset.id = table.id;
-                // 建立搜尋索引字串 (包含 ID, 桌名, 賓客名)
                 div.dataset.searchIndex = [table.id, table.name, ...table.guests].join(',').toLowerCase();
-
                 div.onclick = () => openModal(table);
                 chartContainer.appendChild(div);
             });
-            // 初始置中
+            
+            // 渲染完成後，自動執行一次最適大小調整
             setTimeout(() => {
-                mapViewport.scrollLeft = (chartContainer.offsetWidth - mapViewport.offsetWidth) / 2 + 100;
+                resetZoom();
             }, 100);
         }
 
-        // 搜尋監聽
         const searchInput = document.getElementById('searchInput');
         searchInput.addEventListener('input', (e) => {
             const term = e.target.value.toLowerCase().trim();
             const tables = document.querySelectorAll('.table');
 
             if (term === "") {
-                tables.forEach(t => {
-                    t.classList.remove('highlight', 'dimmed');
-                });
+                tables.forEach(t => { t.classList.remove('highlight', 'dimmed'); });
                 return;
             }
 
@@ -492,7 +431,6 @@
                     div.className = 'guest-item';
                     
                     let displayName = guest.name;
-                    // 若搜尋字串與人名相符，標記紅色
                     if (searchTerm && guest.name.toLowerCase().includes(searchTerm)) {
                         displayName = `<span class="highlight-text">${guest.name}</span>`;
                     }
@@ -504,14 +442,8 @@
             document.getElementById('modal').style.display = 'flex';
         }
 
-        function closeModal() {
-            document.getElementById('modal').style.display = 'none';
-        }
-
-        window.onclick = function(event) {
-            const modal = document.getElementById('modal');
-            if (event.target == modal) closeModal();
-        }
+        function closeModal() { document.getElementById('modal').style.display = 'none'; }
+        window.onclick = function(event) { if (event.target == document.getElementById('modal')) closeModal(); }
 
         renderTables();
     </script>
